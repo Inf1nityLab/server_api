@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:server_data/news/news_screen.dart';
+import 'package:server_data/post_second/add_data.dart';
+import 'package:server_data/user/screens/user_screen.dart';
 
-import 'get/post_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,14 +14,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyNewsApp(),
-    );
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: const UserScreen());
   }
 }
 
