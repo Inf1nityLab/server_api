@@ -32,10 +32,9 @@ class _UserScreenState extends State<UserScreen> {
 
   Future<void> postData(String name, String email, String password) async {
     final body =
-    jsonEncode({'name': name, 'email': email, 'password': password});
+        jsonEncode({'name': name, 'email': email, 'password': password});
     final response = await http.post(
-      Uri.parse(
-          'https://65f97f2bdf1514524611cbd0.mockapi.io/api/to_do/Users'),
+      Uri.parse('https://65f97f2bdf1514524611cbd0.mockapi.io/api/to_do/Users'),
       body: body,
       headers: {'Content-Type': 'application/json'},
     );
@@ -44,6 +43,27 @@ class _UserScreenState extends State<UserScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Данные успешно добавлены!')),
       );
+      setState(() {
+        _userModel = getData();
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: ${response.statusCode}')),
+      );
+    }
+  }
+
+  Future<void> deleteData(String id) async {
+    final response = await http.delete(Uri.parse(
+        'https://65f97f2bdf1514524611cbd0.mockapi.io/api/to_do/Users/$id'));
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Данные успешно удалены')),
+      );
+      setState(() {
+        _userModel = getData();
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка: ${response.statusCode}')),
@@ -64,29 +84,52 @@ class _UserScreenState extends State<UserScreen> {
       body: FutureBuilder<List<UserModel>>(
         future: _userModel,
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.done) {
             return ListView.builder(
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final user = snapshot.data![index];
-                return Container(
-                  height: 100,
-                  color: Colors.tealAccent,
-                  margin: const EdgeInsets.all(20),
-                  child: ListTile(
-                    title: Text('Name: ${user.name}'),
-                    subtitle: Text('Email: ${user.email}'),
-                    trailing: Text('Password : ${user.password}'),
+                return GestureDetector(
+                  onLongPress: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title:
+                                const Text('Вы реально хотите удалить данные?'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Нет')),
+                              TextButton(
+                                  onPressed: () async {
+                                    await deleteData(user.id);
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Да')),
+                            ],
+                          );
+                        });
+                  },
+                  child: Container(
+                    height: 100,
+                    color: Colors.tealAccent,
+                    margin: const EdgeInsets.all(20),
+                    child: ListTile(
+                      title: Text('Name: ${user.name}'),
+                      subtitle: Text('Email: ${user.email}'),
+                      trailing: Text('Password : ${user.password}'),
+                    ),
                   ),
                 );
               },
             );
-          } else if (snapshot.hasError) {
-            return Text('${snapshot.error}');
           }
 
           // Display a loading indicator while waiting for data
-          return const CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -119,14 +162,16 @@ class _UserScreenState extends State<UserScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-
                         setState(() async {
                           if (nameController.text.isNotEmpty &&
                               emailController.text.isNotEmpty &&
-                              passwordController.text.isNotEmpty){
-                            await postData(nameController.text, emailController.text, passwordController.text);
+                              passwordController.text.isNotEmpty) {
+                            await postData(nameController.text,
+                                emailController.text, passwordController.text);
                             Navigator.pop(context);
-
+                            nameController.clear();
+                            emailController.clear();
+                            passwordController.clear();
                           }
                         });
                       },
@@ -141,8 +186,8 @@ class _UserScreenState extends State<UserScreen> {
     );
   }
 
-  Widget textFieldWidget(String text,
-      TextEditingController textEditingController) {
+  Widget textFieldWidget(
+      String text, TextEditingController textEditingController) {
     return TextField(
       controller: textEditingController,
       decoration: InputDecoration(
