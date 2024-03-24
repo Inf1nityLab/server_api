@@ -71,6 +71,31 @@ class _UserScreenState extends State<UserScreen> {
     }
   }
 
+  Future<void> putData(
+      String name, String email, String password, String id) async {
+    final body =
+        jsonEncode({'name': name, 'email': email, 'password': password});
+    final response = await http.put(
+      Uri.parse(
+          'https://65f97f2bdf1514524611cbd0.mockapi.io/api/to_do/Users/$id'),
+      body: body,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Данные успешно обнавлены!')),
+      );
+      setState(() {
+        _userModel = getData();
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: ${response.statusCode}')),
+      );
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -118,6 +143,63 @@ class _UserScreenState extends State<UserScreen> {
                     color: Colors.tealAccent,
                     margin: const EdgeInsets.all(20),
                     child: ListTile(
+                      leading: IconButton(
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Update User info'),
+                                  content: Container(
+                                    height: 200,
+                                    child: Column(
+                                      children: [
+                                        textFieldWidget('Name', nameController),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        textFieldWidget(
+                                            'Email', emailController),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        textFieldWidget(
+                                            'Password', passwordController)
+                                      ],
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() async {
+                                          if (nameController.text.isNotEmpty &&
+                                              emailController.text.isNotEmpty &&
+                                              passwordController
+                                                  .text.isNotEmpty) {
+                                            await putData(
+                                                nameController.text,
+                                                emailController.text,
+                                                passwordController.text,
+                                                user.id);
+                                            Navigator.pop(context);
+                                            nameController.clear();
+                                            emailController.clear();
+                                            passwordController.clear();
+                                          }
+                                        });
+                                      },
+                                      child: const Text('Add data'),
+                                    ),
+                                  ],
+                                );
+                              });
+                        },
+                        icon: const Icon(Icons.edit),
+                      ),
                       title: Text('Name: ${user.name}'),
                       subtitle: Text('Email: ${user.email}'),
                       trailing: Text('Password : ${user.password}'),
